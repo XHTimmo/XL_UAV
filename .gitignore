@@ -7,5 +7,6 @@
 !.gitignore
 !CMakeLists.txt
 !README.md
+!sdkconfig
 build/
 
