@@ -146,6 +146,20 @@ static esp_err_t mpu6050_wake_up(void *sensor)
 }
 
 /***************************************************************************************************
+ *函数：esp_err_t mpu6050_get_deviceid(void *sensor, uint8_t *const deviceid)
+ *功能：获取MPU6050ID
+ *参数：
+ *void *sensor  指向MPU6050句柄的指针
+ *uint8_t *const deviceid   指向MPU6050设备ID的指针
+ *返回值：错误值
+ *备注：
+ ***************************************************************************************************/
+esp_err_t mpu6050_get_deviceid(void *sensor, uint8_t *const deviceid)
+{
+    return mpu6050_read(sensor, MPU6050_WHO_AM_I, deviceid, 1);
+}
+
+/***************************************************************************************************
  *函数：void i2c_sensor_mpu6050_init(void)
  *功能：初始化MPU6050
  *参数：
@@ -170,7 +184,7 @@ void i2c_sensor_mpu6050_init(void)
     if (ret != ESP_FAIL)
     {
         ESP_LOGI(TAG, "2 successful config mpu6050");
-        ESP_LOGI(TAG, "  ACCE_FS_%d,GYRO_FS_%dDPS", (int)(pow(2, (ACCE_FS_4G + 1))), (int)(250 * pow(2, (ACCE_FS_4G))));
+        ESP_LOGI(TAG, "  ACCE_FS_%dG GYRO_FS_%dDPS", (int)(pow(2, (ACCE_FS_4G + 1))), (int)(250 * pow(2, (ACCE_FS_4G))));
     }
     else
     {
@@ -188,4 +202,22 @@ void i2c_sensor_mpu6050_init(void)
         ESP_LOGE(TAG, "3 fail to wake up mpu6050");
     }
     TEST_ASSERT_EQUAL(ESP_OK, ret);
+
+    uint8_t mpu6050_deviceid = 0;
+    ret = mpu6050_get_deviceid(mpu6050, &mpu6050_deviceid);
+    if (ret != ESP_FAIL)
+    {
+        ESP_LOGI(TAG, "4 successful get id from mpu6050");
+        if(mpu6050_deviceid == MPU6050_WHO_AM_I_VAL){
+            ESP_LOGI(TAG,"  MPU6050 ID:%2.x",mpu6050_deviceid);
+        }else{
+            ESP_LOGW(TAG,"  MPU6050 ID:%2.x is not as MPU6050_WHO_AM_I_VAL:%2.x",mpu6050_deviceid,MPU6050_WHO_AM_I_VAL);
+        }
+    }
+    else
+    {
+        ESP_LOGE(TAG, "4 fail to get id from mpu6050");
+    }
+    TEST_ASSERT_EQUAL(ESP_OK, ret);
+    
 }
