@@ -1,12 +1,4 @@
-*.*
-*
-.*
-!*/
-!/main/*
-!/components/*
-!.gitignore
-!CMakeLists.txt
-!README.md
-!sdkconfig
-build/
+.devcontainer
+.vscode
+build/*
 
