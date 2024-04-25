@@ -169,7 +169,7 @@ esp_err_t mpu6050_get_deviceid(void *sensor, uint8_t *const deviceid)
 void i2c_sensor_mpu6050_init(void)
 {
     esp_err_t ret;
-
+    ESP_LOGI(TAG,"----------Begin init MPU6050----------");
     mpu6050 = mpu6050_create(I2C_MASTER_NUM, MPU6050_IIC_ADDR);
     if (mpu6050 != NULL)
     {
@@ -219,5 +219,5 @@ void i2c_sensor_mpu6050_init(void)
         ESP_LOGE(TAG, "4 fail to get id from mpu6050");
     }
     TEST_ASSERT_EQUAL(ESP_OK, ret);
-    
+    ESP_LOGI(TAG,"----------End init MPU6050----------\n");
 }

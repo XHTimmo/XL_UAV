@@ -38,8 +38,14 @@ typedef enum {
 } mpu6050_gyro_fs_t;
 
 void i2c_sensor_mpu6050_init(void);
+
 static MPU6050_handle mpu6050_create(i2c_port_t port,const uint16_t dev_addr);
 static esp_err_t mpu6050_config(void *sensor, const mpu6050_acce_fs_t acce_fs, const mpu6050_gyro_fs_t gyro_fs);
 static esp_err_t mpu6050_wake_up(void * sensor);
 static esp_err_t mpu6050_get_deviceid(void* sensor, uint8_t *const deviceid);
+static esp_err_t mpu6050_read(void *sensor, const uint8_t reg_start_addr, uint8_t *const data_buf, const uint8_t data_len);
+static esp_err_t mpu6050_write(void *sensor, const uint8_t reg_start_addr, const uint8_t *const data_buf, const uint8_t data_len);
+
+
+
 #endif

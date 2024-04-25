@@ -7,9 +7,12 @@ void MainInit(){
     i2c_bus_init();
     i2c_sensor_mpu6050_init();
 }
+void showbanner(void){
+    printf("+-+-+-+-+-+-+\n|X|L|_|U|A|V|\n+-+-+-+-+-+-+\n");
+}
 void app_main(void)
 {
-    printf("XL_UAV\n");
+    showbanner();
     MainInit();
     while (1)
     {
