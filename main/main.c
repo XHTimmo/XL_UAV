@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <main.h>
 #include <IIC.h>
 #include <MPU6050.h>
 #include <freertos/FreeRTOS.h>

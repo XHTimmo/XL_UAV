@@ -8,6 +8,18 @@
 
 static const char *TAG = "MPU";
 static void *mpu6050 = NULL;
+
+static mpu6050_raw_data zero_acce = {
+    .x = 0,
+    .y = 0,
+    .z = 0,
+};
+static mpu6050_raw_data zero_gyro = {
+    .x = 0,
+    .y = 0,
+    .z = 0,
+};
+
 typedef struct
 {
     i2c_port_t bus;
@@ -160,6 +172,92 @@ esp_err_t mpu6050_get_deviceid(void *sensor, uint8_t *const deviceid)
 }
 
 /***************************************************************************************************
+ *函数：esp_err_t mpu6050_get_raw_acce(void * sensor, mpu6050_raw_acce_value_t *const raw_acce_value)
+ *功能：获取ACCE的原始值
+ *参数：
+ *sensor mpu6050句柄
+ *const raw_acce_value 指向加速度原始值的指针
+ *返回值：错误代码
+ *备注：获取ACCE加速的原始值
+ ***************************************************************************************************/
+esp_err_t mpu6050_get_raw_acce(void *sensor, mpu6050_raw_acce_value_t *const raw_acce_value)
+{
+    uint8_t data_rd[6];
+    esp_err_t ret = mpu6050_read(sensor, MPU6050_ACCEL_XOUT_H, data_rd, sizeof(data_rd));
+
+    raw_acce_value->raw_acce_x = (int16_t)((data_rd[0] << 8) + (data_rd[1]));
+    raw_acce_value->raw_acce_y = (int16_t)((data_rd[2] << 8) + (data_rd[3]));
+    raw_acce_value->raw_acce_z = (int16_t)((data_rd[4] << 8) + (data_rd[5]));
+    return ret;
+}
+
+/***************************************************************************************************
+ *函数：esp_err_t mpu6050_get_raw_gyro(void * sensor, mpu6050_raw_gyro_value_t *const raw_gyro_value)
+ *功能：获取GYRO的原始值
+ *参数：
+ *sensor mpu6050句柄
+ *const raw_gyro_value 指向角加速度原始值的指针
+ *返回值：错误代码
+ *备注：获取GYRO角加速的原始值
+ ***************************************************************************************************/
+esp_err_t mpu6050_get_raw_gyro(void *sensor, mpu6050_raw_gyro_value_t *const raw_gyro_value)
+{
+    uint8_t data_rd[6];
+    esp_err_t ret = mpu6050_read(sensor, MPU6050_GYRO_XOUT_H, data_rd, sizeof(data_rd));
+
+    raw_gyro_value->raw_gyro_x = (int16_t)((data_rd[0] << 8) + (data_rd[1]));
+    raw_gyro_value->raw_gyro_y = (int16_t)((data_rd[2] << 8) + (data_rd[3]));
+    raw_gyro_value->raw_gyro_z = (int16_t)((data_rd[4] << 8) + (data_rd[5]));
+
+    return ret;
+}
+static void mpu6050_get_raw_zero(void *sensor)
+{
+    esp_err_t ret;
+    mpu6050_raw_acce_value_t zero_raw_acce_data;
+    mpu6050_raw_gyro_value_t zero_raw_gyro_data;
+
+    for (uint8_t i = 0; i < 200; i++)
+    {
+        ret = mpu6050_get_raw_acce(mpu6050, &zero_raw_acce_data);
+        if (ret == ESP_OK)
+        {
+            // ESP_LOGI(TAG, "x_acce:%5d\ty_acce:%5d\tz_acce:%5d", zero_raw_acce_data.raw_acce_x, zero_raw_acce_data.raw_acce_y, zero_raw_acce_data.raw_acce_z);
+            zero_acce.x += zero_raw_acce_data.raw_acce_x;
+            zero_acce.y += zero_raw_acce_data.raw_acce_y;
+            zero_acce.z += zero_raw_acce_data.raw_acce_z - 16384;
+        }
+        else
+        {
+            ESP_LOGW(TAG, "fail to get raw_acce");
+        }
+        ret = mpu6050_get_raw_gyro(mpu6050, &zero_raw_gyro_data);
+        if (ret == ESP_OK)
+        {
+            // ESP_LOGI(TAG, "x_gyro:%5d\ty_gyro:%5d\tz_gyro:%5d", zero_raw_gyro_data.raw_gyro_x, zero_raw_gyro_data.raw_gyro_y, zero_raw_gyro_data.raw_gyro_z);
+            zero_gyro.x += zero_raw_gyro_data.raw_gyro_x;
+            zero_gyro.y += zero_raw_gyro_data.raw_gyro_y;
+            zero_gyro.z += zero_raw_gyro_data.raw_gyro_z;
+        }
+        else
+        {
+            ESP_LOGW(TAG, "fail to get raw_gyro");
+        }
+
+        // vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+    zero_acce.x /= 200;
+    zero_acce.y /= 200;
+    zero_acce.z /= 200;
+
+    zero_gyro.x /= 200;
+    zero_gyro.y /= 200;
+    zero_gyro.z /= 200;
+    ESP_LOGI(TAG,"5 successful get raw zero");
+    ESP_LOGI(TAG, "  x_acce_zero:%5.5lf\ty_acce_zero:%5.5lf\tz_acce_zero:%5.5lf", zero_acce.x, zero_acce.y, zero_acce.z);
+    ESP_LOGI(TAG, "  x_gyro_zero:%5.5lf\ty_gyro_zero:%5.5lf\tz_gyro_zero:%5.5lf", zero_gyro.x, zero_gyro.y, zero_gyro.z);
+}
+/***************************************************************************************************
  *函数：void i2c_sensor_mpu6050_init(void)
  *功能：初始化MPU6050
  *参数：
@@ -169,7 +267,7 @@ esp_err_t mpu6050_get_deviceid(void *sensor, uint8_t *const deviceid)
 void i2c_sensor_mpu6050_init(void)
 {
     esp_err_t ret;
-    ESP_LOGI(TAG,"----------Begin init MPU6050----------");
+    ESP_LOGI(TAG, "----------Begin init MPU6050----------");
     mpu6050 = mpu6050_create(I2C_MASTER_NUM, MPU6050_IIC_ADDR);
     if (mpu6050 != NULL)
     {
@@ -180,11 +278,11 @@ void i2c_sensor_mpu6050_init(void)
         ESP_LOGE(TAG, "1 fail creat a mpu6050 handle");
     }
 
-    ret = mpu6050_config(mpu6050, ACCE_FS_4G, GYRO_FS_500DPS);
+    ret = mpu6050_config(mpu6050, ACCE_FS_2G, GYRO_FS_500DPS);
     if (ret != ESP_FAIL)
     {
         ESP_LOGI(TAG, "2 successful config mpu6050");
-        ESP_LOGI(TAG, "  ACCE_FS_%dG GYRO_FS_%dDPS", (int)(pow(2, (ACCE_FS_4G + 1))), (int)(250 * pow(2, (ACCE_FS_4G))));
+        ESP_LOGI(TAG, "  ACCE_FS_%dG GYRO_FS_%dDPS", (int)(pow(2, (ACCE_FS_2G + 1))), (int)(250 * pow(2, (GYRO_FS_500DPS))));
     }
     else
     {
@@ -208,10 +306,13 @@ void i2c_sensor_mpu6050_init(void)
     if (ret != ESP_FAIL)
     {
         ESP_LOGI(TAG, "4 successful get id from mpu6050");
-        if(mpu6050_deviceid == MPU6050_WHO_AM_I_VAL){
-            ESP_LOGI(TAG,"  MPU6050 ID:%2.x",mpu6050_deviceid);
-        }else{
-            ESP_LOGW(TAG,"  MPU6050 ID:%2.x is not as MPU6050_WHO_AM_I_VAL:%2.x",mpu6050_deviceid,MPU6050_WHO_AM_I_VAL);
+        if (mpu6050_deviceid == MPU6050_WHO_AM_I_VAL)
+        {
+            ESP_LOGI(TAG, "  MPU6050 ID:%2.x", mpu6050_deviceid);
+        }
+        else
+        {
+            ESP_LOGW(TAG, "  MPU6050 ID:%2.x is not as MPU6050_WHO_AM_I_VAL:%2.x", mpu6050_deviceid, MPU6050_WHO_AM_I_VAL);
         }
     }
     else
@@ -219,5 +320,8 @@ void i2c_sensor_mpu6050_init(void)
         ESP_LOGE(TAG, "4 fail to get id from mpu6050");
     }
     TEST_ASSERT_EQUAL(ESP_OK, ret);
-    ESP_LOGI(TAG,"----------End init MPU6050----------\n");
+
+    mpu6050_get_raw_zero(mpu6050);
+
+    ESP_LOGI(TAG, "----------End init MPU6050----------\n");
 }

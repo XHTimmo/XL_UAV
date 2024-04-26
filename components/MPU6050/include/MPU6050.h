@@ -37,6 +37,25 @@ typedef enum {
     GYRO_FS_2000DPS = 3,     /*!< Gyroscope full scale range is +/- 2000 degree per sencond */
 } mpu6050_gyro_fs_t;
 
+typedef struct {
+    int16_t raw_acce_x;
+    int16_t raw_acce_y;
+    int16_t raw_acce_z;
+} mpu6050_raw_acce_value_t;
+
+typedef struct {
+    int16_t raw_gyro_x;
+    int16_t raw_gyro_y;
+    int16_t raw_gyro_z;
+} mpu6050_raw_gyro_value_t;
+
+
+typedef struct {
+    double x;
+    double y;
+    double z;
+} mpu6050_raw_data;
+
 void i2c_sensor_mpu6050_init(void);
 
 static MPU6050_handle mpu6050_create(i2c_port_t port,const uint16_t dev_addr);
@@ -46,6 +65,8 @@ static esp_err_t mpu6050_get_deviceid(void* sensor, uint8_t *const deviceid);
 static esp_err_t mpu6050_read(void *sensor, const uint8_t reg_start_addr, uint8_t *const data_buf, const uint8_t data_len);
 static esp_err_t mpu6050_write(void *sensor, const uint8_t reg_start_addr, const uint8_t *const data_buf, const uint8_t data_len);
 
+static esp_err_t mpu6050_get_raw_acce(void * sensor, mpu6050_raw_acce_value_t *const raw_acce_value);
+static esp_err_t mpu6050_get_raw_gyro(void * sensor, mpu6050_raw_gyro_value_t *const raw_gyro_value);
 
-
+static void mpu6050_get_raw_zero(void * sensor);
 #endif
