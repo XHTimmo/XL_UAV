@@ -9,12 +9,12 @@
 static const char *TAG = "MPU";
 static void *mpu6050 = NULL;
 
-static mpu6050_raw_data zero_acce = {
+static mpu6050_raw_data_t zero_acce = {
     .x = 0,
     .y = 0,
     .z = 0,
 };
-static mpu6050_raw_data zero_gyro = {
+static mpu6050_raw_data_t zero_gyro = {
     .x = 0,
     .y = 0,
     .z = 0,
@@ -225,7 +225,7 @@ static void mpu6050_get_raw_zero(void *sensor)
             // ESP_LOGI(TAG, "x_acce:%5d\ty_acce:%5d\tz_acce:%5d", zero_raw_acce_data.raw_acce_x, zero_raw_acce_data.raw_acce_y, zero_raw_acce_data.raw_acce_z);
             zero_acce.x += zero_raw_acce_data.raw_acce_x;
             zero_acce.y += zero_raw_acce_data.raw_acce_y;
-            zero_acce.z += zero_raw_acce_data.raw_acce_z - 16384;
+            zero_acce.z += zero_raw_acce_data.raw_acce_z;
         }
         else
         {
@@ -253,7 +253,7 @@ static void mpu6050_get_raw_zero(void *sensor)
     zero_gyro.x /= 200;
     zero_gyro.y /= 200;
     zero_gyro.z /= 200;
-    ESP_LOGI(TAG,"5 successful get raw zero");
+    ESP_LOGI(TAG, "5 successful get raw zero");
     ESP_LOGI(TAG, "  x_acce_zero:%5.5lf\ty_acce_zero:%5.5lf\tz_acce_zero:%5.5lf", zero_acce.x, zero_acce.y, zero_acce.z);
     ESP_LOGI(TAG, "  x_gyro_zero:%5.5lf\ty_gyro_zero:%5.5lf\tz_gyro_zero:%5.5lf", zero_gyro.x, zero_gyro.y, zero_gyro.z);
 }
@@ -324,4 +324,22 @@ void i2c_sensor_mpu6050_init(void)
     mpu6050_get_raw_zero(mpu6050);
 
     ESP_LOGI(TAG, "----------End init MPU6050----------\n");
+}
+
+mpu6050_raw_data_return_t mpu6050_get_raw_data(void)
+{
+    esp_err_t ret;
+    mpu6050_raw_data_return_t ret_data;
+    mpu6050_raw_acce_value_t raw_acce_data;
+    mpu6050_raw_gyro_value_t raw_gyro_data;
+    ret = mpu6050_get_raw_acce(mpu6050, &raw_acce_data);
+    ret = mpu6050_get_raw_gyro(mpu6050, &raw_gyro_data);
+    ret_data.x1 = raw_acce_data.raw_acce_x-zero_acce.x;
+    ret_data.y1 = raw_acce_data.raw_acce_y-zero_acce.y;
+    ret_data.z1 = raw_acce_data.raw_acce_z-zero_acce.z;
+    ret_data.x2 = raw_gyro_data.raw_gyro_x-zero_gyro.x;
+    ret_data.y2 = raw_gyro_data.raw_gyro_y-zero_gyro.y;
+    ret_data.z2 = raw_gyro_data.raw_gyro_z-zero_gyro.z;
+
+    return ret_data;
 }
