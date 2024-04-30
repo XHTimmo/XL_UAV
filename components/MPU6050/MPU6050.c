@@ -48,22 +48,29 @@ static esp_err_t mpu6050_read(void *sensor, const uint8_t reg_start_addr, uint8_
 
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     ret = i2c_master_start(cmd);
+    // printf("1");
     assert(ESP_OK == ret);
     ret = i2c_master_write_byte(cmd, sens->dev_addr | I2C_MASTER_WRITE, true);
+    // printf("2");
     assert(ESP_OK == ret);
     ret = i2c_master_write_byte(cmd, reg_start_addr, true);
+    // printf("3");
     assert(ESP_OK == ret);
     ret = i2c_master_start(cmd);
+    // printf("4");
     assert(ESP_OK == ret);
     ret = i2c_master_write_byte(cmd, sens->dev_addr | I2C_MASTER_READ, true);
+    // printf("5");
     assert(ESP_OK == ret);
     ret = i2c_master_read(cmd, data_buf, data_len, I2C_MASTER_LAST_NACK);
+    // printf("6");
     assert(ESP_OK == ret);
     ret = i2c_master_stop(cmd);
+    // printf("7");
     assert(ESP_OK == ret);
     ret = i2c_master_cmd_begin(sens->bus, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
-
+    // printf("%s\n",ret==0?"ESP_OK":"ESP_FAIL");
     return ret;
 }
 /***************************************************************************************************
@@ -278,6 +285,7 @@ void i2c_sensor_mpu6050_init(void)
         ESP_LOGE(TAG, "1 fail creat a mpu6050 handle");
     }
 
+
     ret = mpu6050_config(mpu6050, ACCE_FS_2G, GYRO_FS_500DPS);
     if (ret != ESP_FAIL)
     {
@@ -301,7 +309,7 @@ void i2c_sensor_mpu6050_init(void)
     }
     TEST_ASSERT_EQUAL(ESP_OK, ret);
 
-    uint8_t mpu6050_deviceid = 0;
+    uint8_t mpu6050_deviceid= 0;
     ret = mpu6050_get_deviceid(mpu6050, &mpu6050_deviceid);
     if (ret != ESP_FAIL)
     {
@@ -326,10 +334,10 @@ void i2c_sensor_mpu6050_init(void)
     ESP_LOGI(TAG, "----------End init MPU6050----------\n");
 }
 
-mpu6050_raw_data_return_t mpu6050_get_raw_data(void)
+mpu6050_all_raw_data_t mpu6050_get_raw_data(void)
 {
     esp_err_t ret;
-    mpu6050_raw_data_return_t ret_data;
+    mpu6050_all_raw_data_t ret_data;
     mpu6050_raw_acce_value_t raw_acce_data;
     mpu6050_raw_gyro_value_t raw_gyro_data;
     ret = mpu6050_get_raw_acce(mpu6050, &raw_acce_data);

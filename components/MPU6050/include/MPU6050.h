@@ -18,8 +18,7 @@
 #define MPU6050_PWR_MGMT_1 0x6Bu
 #define MPU6050_WHO_AM_I 0x75u
 
-#define ALPHA 0.3f              /*!< Weight of gyroscope */
-#define RAD_TO_DEG 57.27272727f /*!< Radians to degrees */
+
 
 typedef void * MPU6050_handle;
 
@@ -63,7 +62,7 @@ typedef struct {
     double x2;
     double y2;
     double z2;
-} mpu6050_raw_data_return_t;
+} mpu6050_all_raw_data_t;
 
 
 static MPU6050_handle mpu6050_create(i2c_port_t port,const uint16_t dev_addr);
@@ -79,5 +78,5 @@ static void mpu6050_get_raw_zero(void * sensor);
 
 //public
 void i2c_sensor_mpu6050_init(void);
-mpu6050_raw_data_return_t mpu6050_get_raw_data(void);
+mpu6050_all_raw_data_t mpu6050_get_raw_data(void);
 #endif
